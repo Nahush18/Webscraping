@@ -1,21 +1,35 @@
 import mongoose from 'mongoose';
 
-let isConnected = false;// Variable to track the connection status
+let isConnected = false; // Track the connection status
 
 export const connectToDB = async () => {
-  mongoose.set('strictQuery', true);
+  mongoose.set('strictQuery', true); // Enable or disable strict mode for queries
 
-  if(!process.env.MONGODB_URI) return console.log('MONGODB_URI is not defined');
+  if (!process.env.MONGODB_URI) {
+    console.error('MONGODB_URI is not defined');
+    return;
+  }
 
-  if(isConnected) return console.log('=> using existing database connection');
+  if (isConnected) {
+    console.log('=> using existing database connection');
+    return;
+  }
 
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+    });
 
-    isConnected = true;
-
+    isConnected = true; // Set connection status to true
     console.log('MongoDB Connected');
-  } catch (error) {
-    console.log(error)
+  } catch (error: unknown) {
+    // Narrow the type of error to check if it's an instance of Error
+    if (error instanceof Error) {
+      console.error('MongoDB connection error:', error.message);
+    } else {
+      console.error('An unknown error occurred during MongoDB connection.');
+    }
+    process.exit(1); // Exit process if unable to connect
   }
-}
+};
